@@ -22,12 +22,15 @@ class main {
     circularLinkedListNode readyQueue;
     int timmer;
     int cpuLifeTime;
+
     main() {
         timmer = 0;
     }
+
     public circularLinkedListNode removeProcess(circularLinkedListNode current) {
         circularLinkedListNode temp = readyQueue;
         if (readyQueue.next == readyQueue) {
+            readyQueue = null;
             return null;
         } else if (current == readyQueue) {
             temp = temp.next;
@@ -47,7 +50,6 @@ class main {
         return current;
     }
 
-
     public void makeReadyQueue() {
         circularLinkedListNode temp = null;
         for (int i = 0; i < noOfProcesses; i++) {
@@ -62,63 +64,78 @@ class main {
                 temp = newNode;
             }
         }
+        
     }
 
     public void gantChart() {
         System.out.println("Each process is running for " + Quantum + " time quantum.\n");
         makeReadyQueue();
+        
         circularLinkedListNode current = readyQueue;
         boolean exexutedFlag = false;
+        Queue<circularLinkedListNode> intermediateList = new LinkedList<circularLinkedListNode>();
+        intermediateList.add(readyQueue);
         do {
+            if (!intermediateList.isEmpty())
+                current = intermediateList.remove();
+            else
+                current = readyQueue;
             int q = Quantum;
             exexutedFlag = false;
-            System.out.println("Time : "+timmer+" seconds");
-            if(current.arrivalTimeOfProcess <= timmer){
-                current.isArrived = true;
-            }
-            if(current.burstTimeOfProcess > cpuLifeTime){
-                System.out.println("Process "+ current.id + " has burst time greater than cpu lifetime\nExiting Scheduler......");
-                break;
+            if(current.isArrived==true){
+                System.out.println("Time : " + timmer + " seconds");
             }
             while (current.burstTimeOfProcess > 0 && q > 0 && current.isArrived == true) {
                 current.burstTimeOfProcess--;
                 q--;
                 timmer++;
+                circularLinkedListNode checker = readyQueue;
+                do {
+                    if (checker.arrivalTimeOfProcess == timmer) {
+                        checker.isArrived = true;
+                        intermediateList.add(checker);
+                    }
+                    checker = checker.next;
+                } while (checker != readyQueue);
                 exexutedFlag = true;
             }
             if (exexutedFlag == true) {
                 System.out.println("Executing Process : " + current.id);
-            }else{
+            } else {
                 circularLinkedListNode checker = readyQueue;
                 boolean flag = false;
-                do{
-                    if(checker.arrivalTimeOfProcess <= timmer){
+                do {
+                    if (checker.arrivalTimeOfProcess == timmer) {
                         flag = true;
-                        break;
+                        checker.isArrived = true;
+                        intermediateList.add(checker);
                     }
                     checker = checker.next;
-                }while(checker != readyQueue);
-                if(!flag){
+                } while (checker != readyQueue);
+                if (!flag) {
                     timmer++;
                 }
             }
             if (current.burstTimeOfProcess == 0) {
                 current = removeProcess(current);
-            } else {
-                current = current.next;
+
+            } else if (exexutedFlag == true) {
+                intermediateList.add(current);
             }
-        } while (current != null);
+        } while (readyQueue != null && timmer<=cpuLifeTime);
+        System.out.println("Time : "+timmer+" seconds");
     }
 
     public void scan(int response) {
         Scanner scan = new Scanner(System.in);
+        int generationGap = 1;
         if (response == 0) {
             System.out.println();
             System.out.print("Enter time Quantum : ");
             Quantum = scan.nextInt();
-            if(Quantum == 0){
+            if (Quantum == 0) {
                 System.out.println("Invalid Input");
-                while(Quantum <= 0){
+                while (Quantum <= 0) {
                     System.out.println();
                     System.out.print("Enter time Quantum : ");
                     Quantum = scan.nextInt();
@@ -142,6 +159,14 @@ class main {
             System.out.print("Enter the CPU Lifetime : ");
             cpuLifeTime = scan.nextInt();
             System.out.println();
+            int sum = 0;
+            for (int i = 0; i < noOfProcesses; i++) {
+                sum += burstTime[i];
+            }
+            if (sum > cpuLifeTime) {
+                System.out.println("burst time greater than cpu lifetime\nExiting Scheduler......");
+                System.exit(-1);
+            }
         } else if (response == 1) {
             Random randomInteger = new Random();
             Quantum = randomInteger.nextInt(11) + 1;
@@ -152,7 +177,8 @@ class main {
             System.out.println();
             arrivalTime = new int[noOfProcesses];
             for (int i = 0; i < noOfProcesses; i++) {
-                arrivalTime[i] = randomInteger.nextInt(6);
+                arrivalTime[i] = randomInteger.nextInt(6) + generationGap;
+                generationGap += generationGap;
                 System.out.println("Randomly generated arrival time of process " + i + " : " + arrivalTime[i]);
             }
             System.out.println();
@@ -165,6 +191,14 @@ class main {
             cpuLifeTime = randomInteger.nextInt(101) + 1;
             System.out.println("Randomly generated CPU Lifetime : " + cpuLifeTime);
             System.out.println();
+            int sum = 0;
+            for (int i = 0; i < noOfProcesses; i++) {
+                sum += burstTime[i];
+            }
+            if (sum > cpuLifeTime) {
+                System.out.println("burst time greater than cpu lifetime\nExiting Scheduler......");
+                System.exit(-1);
+            }
         }
     }
 
