@@ -21,7 +21,7 @@ class main {
     int[] burstTime;
     circularLinkedListNode readyQueue;
     int timmer;
-
+    int cpuLifeTime;
     main() {
         timmer = 0;
     }
@@ -47,9 +47,6 @@ class main {
         return current;
     }
 
-    public void getStats() {
-
-    }
 
     public void makeReadyQueue() {
         circularLinkedListNode temp = null;
@@ -79,6 +76,10 @@ class main {
             if(current.arrivalTimeOfProcess <= timmer){
                 current.isArrived = true;
             }
+            if(current.burstTimeOfProcess > cpuLifeTime){
+                System.out.println("Process "+ current.id + " has burst time greater than cpu lifetime\nExiting Scheduler......");
+                break;
+            }
             while (current.burstTimeOfProcess > 0 && q > 0 && current.isArrived == true) {
                 current.burstTimeOfProcess--;
                 q--;
@@ -88,7 +89,18 @@ class main {
             if (exexutedFlag == true) {
                 System.out.println("Executing Process : " + current.id);
             }else{
-                timmer++;
+                circularLinkedListNode checker = readyQueue;
+                boolean flag = false;
+                do{
+                    if(checker.arrivalTimeOfProcess <= timmer){
+                        flag = true;
+                        break;
+                    }
+                    checker = checker.next;
+                }while(checker != readyQueue);
+                if(!flag){
+                    timmer++;
+                }
             }
             if (current.burstTimeOfProcess == 0) {
                 current = removeProcess(current);
@@ -127,6 +139,9 @@ class main {
                 burstTime[i] = scan.nextInt();
             }
             System.out.println();
+            System.out.print("Enter the CPU Lifetime : ");
+            cpuLifeTime = scan.nextInt();
+            System.out.println();
         } else if (response == 1) {
             Random randomInteger = new Random();
             Quantum = randomInteger.nextInt(11) + 1;
@@ -147,6 +162,9 @@ class main {
                 System.out.println("Randomly generated burst time of process " + i + " : " + burstTime[i]);
             }
             System.out.println();
+            cpuLifeTime = randomInteger.nextInt(101) + 1;
+            System.out.println("Randomly generated CPU Lifetime : " + cpuLifeTime);
+            System.out.println();
         }
     }
 
@@ -166,7 +184,6 @@ class main {
             main scheduler = new main();
             scheduler.scan(response);
             scheduler.gantChart();
-            scheduler.getStats();
             System.out.print("\nDo you want to continue? (0/1) : ");
             response = scan.nextInt();
             if (response == 0) {
